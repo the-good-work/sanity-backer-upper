@@ -1,15 +1,21 @@
 import { Application } from "jsr:@oak/oak@14";
-import { exec, OutputMode } from "https://deno.land/x/exec@0.0.5/mod.ts";
 
 const app = new Application();
 
 app.use(async (ctx, next) => {
   if (ctx.request.url.pathname === "/backup" && ctx.request.method === "GET") {
     try {
+      const { SANITY_AUTH_TOKEN, PROJECT_ID } = await ctx.request.body.json();
       const cliConf =
-        `import {defineCliConfig} from '@sanity/cli'; export default defineCliConfig({ api: { projectId: 'l1rjav4f' } });`;
+        `import {defineCliConfig} from '@sanity/cli'; export default defineCliConfig({ api: { projectId: '${PROJECT_ID}',  } });`;
 
-      await Deno.mkdir("tmp");
+      try {
+        await Deno.stat("tmp");
+      } catch {
+        console.info("tmp doesnt exist, creating");
+        await Deno.mkdir("tmp");
+      }
+
       const tempDir = await Deno.makeTempDir({ dir: "tmp" });
       await Deno.writeTextFile(`${tempDir}/sanity.cli.ts`, cliConf);
 
@@ -22,6 +28,9 @@ app.use(async (ctx, next) => {
           "prod.tar.gz",
         ],
         cwd: tempDir,
+        env: {
+          "SANITY_AUTH_TOKEN": SANITY_AUTH_TOKEN,
+        },
       })
         .output();
 
@@ -46,6 +55,10 @@ app.use(async (ctx, next) => {
       console.error(err);
       next();
     }
+  } else if (
+    ctx.request.url.pathname === "/" && ctx.request.method === "GET"
+  ) {
+    ctx.response.body = "??";
   } else next();
 });
 

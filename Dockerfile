@@ -18,8 +18,6 @@ COPY ./src ./src
 COPY ./package.json ./package.json
 
 # Install pnpm
-ARG PNPM_VERSION=9.0.4
-RUN npm install -g pnpm@$PNPM_VERSION
 RUN npm install -g sanity@latest
 RUN npm install
 
@@ -31,4 +29,4 @@ FROM base as build
 
 
 # Start the server by default, this can be overwritten at runtime
-CMD [ "deno",  "run", "--allow-env", "--allow-write", "--allow-net", "--allow-run",  "/app/src/main.ts" ]
+CMD [ "deno",  "run", "--allow-read","--allow-env", "--allow-write", "--allow-net", "--allow-run",  "/app/src/main.ts" ]
